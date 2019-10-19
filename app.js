@@ -29,47 +29,84 @@ app.get("/satellites", function(req, res) {
 	});
 });
 
-app.post("/user/1/satellites", function(req, res) {
+app.post("/user/1/satellites", function(req, response) {
 	// Only user 1 exists
 	// const user_id = req.params.user_id;
-	const params = req.body;
+	const params = req.query;
 	const satelliteParams = [
 		params.name,
 		params.description,
 		params.year_launched,
-		params.sat_id,
-		1 /*user_id*/
+		params.sat_id
 	];
+	console.log(">>>>>>>>>>>>>", satelliteParams);
 	client
 		.query(
-			`INSERT INTO satellites (name, description, year_launched, sat_id, user_id)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING *`,
-			satelliteParams
+			`SELECT * FROM satellites
+      JOIN user_satellites ON user_satellites.satellite_id = satellites.sat_id
+      JOIN users ON user_satellites.user_id = users.id
+      WHERE sat_id = $1 AND user_id = $2;
+    `,
+			[params.sat_id, 1]
 		)
-		.then((error, result) => {
-			if (error) {
-				res.json("Something went wrong when saving your data... ");
+		.then((err, res) => {
+			console.log(">>>>>>>>>>>>>", res);
+			if (err) {
+				response.json({
+					status: "error",
+					error: err
+				});
 			}
-			res.json(result.rows);
+			if (res) {
+				return res.json({
+					status: "duplicate",
+					msg: "You've already added this satellite"
+				});
+			} else {
+				client
+					.query(
+						`INSERT INTO satellites (name, description, year_launched, sat_id)
+          VALUES ($1, $2, $3, $4)
+          RETURNING *`,
+						satelliteParams
+					)
+					.then((error, response) => {
+						if (error) {
+							throw new Error("You suck :P");
+						}
+						client
+							.query(
+								`INSERT INTO user_satellites (user_id, satellite_id)
+            VALUES ($1, $2)
+            RETURNING *`,
+								[1, params.sat_id]
+							)
+							.then((error, response) => {
+								if (!error) {
+									response.json(response.rows[0]);
+								}
+							});
+					});
+			}
 		});
 });
 
-app.get("user/1/satellites", function(req, res) {
+// User's satellites
+app.get("/user/1/satellites", function(req, res) {
 	// const user_id = req.params.user_id;
-	client
-		.query(
-			`
-        SELECT * FROM user_satellites
-        WHERE user_id = $1`,
-			1 /* user_id */
-		)
-		.then((error, result) => {
+	client.query(
+		`
+        SELECT * FROM satellites 
+        JOIN user_satellites ON satellites.id = user_satellites.satellite_id
+        WHERE user_satellites.user_id = 1
+        ;`,
+		(error, result) => {
 			if (error) {
-				res.json("Something went wrong when fetching your data... ");
+				res.json("Something went wrong when fetching your data... ", error);
 			}
 			res.json(result.rows);
-		});
+		}
+	);
 });
 
 app.listen(PORT || 8000, () => {
