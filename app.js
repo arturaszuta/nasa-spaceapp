@@ -73,21 +73,18 @@ app.post("/user/1/satellites", function(req, mainresponse) {
 });
 
 // User's satellites
-app.get("/user/1/satellites", function(req, res) {
+app.get("/user/1/satellites", function(req, result) {
 	// const user_id = req.params.user_id;
 	client.query(
 		`
         SELECT * FROM satellites 
-        JOIN user_satellites ON satellites.id = user_satellites.satellite_id
-        WHERE user_satellites.user_id = 1
-        ;`,
-		(error, result) => {
-			if (error) {
-				res.json("Something went wrong when fetching your data... ", error);
-			}
-			res.json(result.rows);
-		}
-	);
+        JOIN user_satellites ON satellites.sat_id = user_satellites.satellite_id
+        WHERE user_satellites.user_id = 1;`,
+		
+		
+	).then((res) => {
+    result.json(res.rows);
+  })
 });
 
 app.listen(PORT || 8000, () => {
