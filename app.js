@@ -1,13 +1,23 @@
+require("dotenv").config();
 const PORT = process.env.PORT;
 const express = require("express");
+const pg = require("pg");
 const app = express();
-const { Pool } = require("pg");
+
+const client = new pg.Client(process.env.PGDBURL);
+client.connect();
 
 app.get("/", function(req, res) {
 	res.send("Hello!");
 });
 
-app.get("/user/1", function(req, res) {
+app.get("/users", function(req, res) {
+	client.query(`SELECT * FROM users`, (error, result) => {
+		res.json(result.rows);
+	});
+});
+
+app.get("/user/:id", function(req, res) {
 	//change route to /user/:userid when auth is setup
 	res.send("pull from db and display users here");
 });
@@ -24,15 +34,17 @@ app.post("/user/:user_id/satellites", function(req, res) {
 		params.description,
 		user_id
 	];
-	return Pool.query(
-		`
+	return pool
+		.query(
+			`
     INSERT INTO satellites (name, created_at, description, user_id)
     VALUES ($1, $2, $3, $4)
     RETURNING *;`,
-		newSatellite
-	).then(res => {
-		res.send({ message: "success", status: 200 });
-	});
+			newSatellite
+		)
+		.then(res => {
+			res.send({ message: "success", status: 200 });
+		});
 });
 
 app.listen(PORT || 8000, () => {
