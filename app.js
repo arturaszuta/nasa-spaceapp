@@ -30,9 +30,8 @@ app.get("/satellites", function(req, res) {
 
 app.post("/user/1/satellites", function(req, mainresponse) {
 
-  const params = req.body;
-  console.log('this are the params', params);
-  console.log('this are the req', req);
+  const params = req.query;
+
 
   
 	const satelliteParams = [
