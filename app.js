@@ -4,9 +4,6 @@ const PORT = process.env.PORT;
 const express = require("express");
 const pg = require("pg");
 const app = express();
-// const client = new pg.Client(
-// 	"postgres://fqshkgbg:fJ75kAwSrulU6C8oOy6LEfALxzFx-wSb@salt.db.elephantsql.com:5432/fqshkgbg"
-// );
 const client = new pg.Client(process.env.PGDBURL);
 client.connect();
 
@@ -16,38 +13,42 @@ app.get("/", function(req, res) {
 
 app.get("/users", function(req, res) {
 	client.query(`SELECT * FROM users`, (error, result) => {
+		if (error) {
+			res.json("Something went wrong when fetching your data... ");
+		}
 		res.json(result.rows);
 	});
 });
 
-app.get("/user/:id", function(req, res) {
-	//change route to /user/:userid when auth is setup
-	res.send("pull from db and display users here");
-});
-
-app.get("/user/1/satellites", function(req, res) {
-	//change route to /user/:userid/satellites when auth is setup
-	res.send("pull from db and display satellites belonging to user 1");
-});
-
-app.post("/user/:user_id/satellites", function(req, res) {
-	const newSatellite = [
-		params.name,
-		params.timestamp,
-		params.description,
-		user_id
+app.post("/satellites", function(req, res) {
+	// Only user 1 exists
+	const satelliteParams = [
+		req.params.name,
+		req.params.description,
+		req.params.sat_id
 	];
-	return pool
+	client
 		.query(
-			`
-    INSERT INTO satellites (name, created_at, description, user_id)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *;`,
-			newSatellite
+			`INSERT INTO satellites (name, description, sat_id)
+    VALUES ($1, $2, $3)
+    RETURNING *`,
+			satelliteParams
 		)
-		.then(res => {
-			res.send({ message: "success", status: 200 });
+		.then((error, result) => {
+			if (error) {
+				res.json("Something went wrong when saving your data... ");
+			}
+			res.json(result.rows);
 		});
+});
+
+app.get("/satellites", function(req, res) {
+	client.query(`SELECT * FROM satellites`, (error, result) => {
+		if (error) {
+			res.json("Something went wrong when fetching your data... ");
+		}
+		res.json(result.rows);
+	});
 });
 
 app.listen(PORT || 8000, () => {
