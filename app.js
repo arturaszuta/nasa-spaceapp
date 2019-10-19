@@ -30,8 +30,6 @@ app.get("/satellites", function(req, res) {
 
 app.post("/user/1/satellites", function(req, mainresponse) {
 
-	// Only user 1 exists
-	// const user_id = req.params.user_id;
   const params = req.query;
   
 	const satelliteParams = [
@@ -45,11 +43,10 @@ app.post("/user/1/satellites", function(req, mainresponse) {
     SELECT * FROM satellites WHERE sat_id = $1;
     `,[params.sat_id]
   ).then((res) => {
-    console.log('first resposne', res);
-    if(!res) {
+    if(!res.rows[0]) {
 
       client.query(`
-      INSERT INTO satellites (name, description, year_launched, sat_id) VALUES ($1,$2,$3, $4);`, [satelliteParams]).then((res) => {
+      INSERT INTO satellites (name, description, year_launched, sat_id) VALUES ($1,$2,$3, $4);`, satelliteParams).then((res) => {
         client.query(`
         INSERT INTO user_satellites (user_id, satellite_id) VALUES ($1, $2);`, [1, params.sat_id])
         mainresponse.json('Created satellite and added it to favorites!')
@@ -58,8 +55,7 @@ app.post("/user/1/satellites", function(req, mainresponse) {
       client.query(`
         SELECT * FROM user_satellites WHERE satellite_id = $1
       `, [params.sat_id]).then((res) => {
-        console.log('>>>>>>>>>><<<<<<<<<<<<<<', res);
-        if(!res) {
+        if(!res.rows[0]) {
           client.query(`
           INSERT INTO user_satellites (user_id, satellite_id) VALUES ($1, $2);`, [1, params.sat_id]).then((res) => {
             mainresponse.json('Added satellite to favorites!')
