@@ -38,7 +38,8 @@ app.post("/user/1/satellites", function(req, mainresponse) {
 		params.name,
 		params.description,
 		params.year_launched,
-    params.sat_id
+    params.sat_id,
+    params.img_url
   ];
   
   client.query(`
@@ -48,7 +49,7 @@ app.post("/user/1/satellites", function(req, mainresponse) {
     if(!res.rows[0]) {
 
       client.query(`
-      INSERT INTO satellites (name, description, year_launched, sat_id) VALUES ($1,$2,$3, $4);`, satelliteParams).then((res) => {
+      INSERT INTO satellites (name, description, year_launched, sat_id, img_url) VALUES ($1,$2,$3, $4,$5);`, satelliteParams).then((res) => {
         client.query(`
         INSERT INTO user_satellites (user_id, satellite_id) VALUES ($1, $2);`, [1, params.sat_id])
         mainresponse.json('Created satellite and added it to favorites!')
