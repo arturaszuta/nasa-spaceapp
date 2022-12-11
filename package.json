@@ -19,7 +19,7 @@
   "homepage": "https://github.com/arturaszuta/nasa-spaceapp#readme",
   "dependencies": {
     "dotenv": "^8.2.0",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "pg": "^7.12.1",
     "pg-promise": "^9.3.3"
   }
